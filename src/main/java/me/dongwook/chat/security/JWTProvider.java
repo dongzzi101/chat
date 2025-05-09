@@ -1,8 +1,13 @@
 package me.dongwook.chat.security;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import lombok.extern.slf4j.Slf4j;
+import me.dongwook.chat.common.constants.Constants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.util.Date;
 
 @Slf4j
 @Component
@@ -29,9 +34,26 @@ public class JWTProvider {
     }
 
     @Value("${token.refresh-token-time}")
-    public void setRefreshTokenTime(long tokenTime) {
-        JWTProvider.refreshTokenTimeForMinute = tokenTime;
+    public void setRefreshTokenTime(long refreshTokenTime) {
+        JWTProvider.refreshTokenTimeForMinute = refreshTokenTime;
     }
+
+    public static String createToken(String username) {
+        return JWT.create()
+                .withSubject(username)
+                .withIssuedAt(new Date())
+                .withExpiresAt(new Date(System.currentTimeMillis() + tokenTimeForMinute * Constants.On_MINUTE_TO_MILLIS))
+                .sign(Algorithm.HMAC256(secretKey));
+    }
+
+    public static String createRefreshToken(String username) {
+        return JWT.create()
+                .withSubject(username)
+                .withIssuedAt(new Date())
+                .withExpiresAt(new Date(System.currentTimeMillis() + tokenTimeForMinute * Constants.On_MINUTE_TO_MILLIS))
+                .sign(Algorithm.HMAC256(refreshSecretKey));
+    }
+
 
 
 }
