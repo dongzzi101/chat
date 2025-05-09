@@ -12,6 +12,7 @@ import me.dongwook.chat.domain.repository.UserRepository;
 import me.dongwook.chat.domain.repository.entity.User;
 import me.dongwook.chat.domain.repository.entity.UserCredentials;
 import me.dongwook.chat.security.Hasher;
+import me.dongwook.chat.security.JWTProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,10 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final Hasher hasher;
+
+    public String getUserFormToken(String token) {
+        return JWTProvider.getUserFormToken(token);
+    }
 
     public LoginResponse login(LoginRequest loginRequest) {
         Optional<User> user = userRepository.findByName(loginRequest.name());
@@ -46,8 +51,8 @@ public class AuthService {
             throw new CustomException(ErrorCode.MISS_MATCH_PASSWORD);
         });
 
-        // TODO jwt
-        return new LoginResponse(ErrorCode.SUCCESS, "TOKEN");
+        String token = JWTProvider.createToken(loginRequest.name());
+        return new LoginResponse(ErrorCode.SUCCESS, token);
     }
 
     @Transactional(transactionManager = "createUserTransactionManager")

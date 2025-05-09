@@ -14,7 +14,6 @@ import me.dongwook.chat.common.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.security.SignatureException;
 import java.util.Date;
 
 @Slf4j
@@ -96,5 +95,10 @@ public class JWTProvider {
         return JWT.decode(token);
     }
 
+
+    public static String getUserFormToken(String token) {
+        DecodedJWT jwt = decodedJWT(token);
+        return jwt.getSubject();
+    }
 
 }
