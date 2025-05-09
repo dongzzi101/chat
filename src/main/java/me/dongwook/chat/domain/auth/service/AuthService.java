@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import me.dongwook.chat.common.exception.CustomException;
 import me.dongwook.chat.common.exception.ErrorCode;
 import me.dongwook.chat.domain.auth.model.request.CreateUserRequest;
+import me.dongwook.chat.domain.auth.model.request.LoginRequest;
 import me.dongwook.chat.domain.auth.model.response.CreateUserResponse;
+import me.dongwook.chat.domain.auth.model.response.LoginResponse;
 import me.dongwook.chat.domain.repository.UserRepository;
 import me.dongwook.chat.domain.repository.entity.User;
 import me.dongwook.chat.domain.repository.entity.UserCredentials;
@@ -23,6 +25,30 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final Hasher hasher;
+
+    public LoginResponse login(LoginRequest loginRequest) {
+        Optional<User> user = userRepository.findByName(loginRequest.name());
+
+        if (!user.isPresent()) {
+            log.error("No such user: {}", loginRequest.name());
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        user.map(u -> {
+            String hashingValue = hasher.getHashingValue(loginRequest.password());
+
+            if (!u.getUserCredentials().getHashed_password().equals(hashingValue)) {
+                throw new CustomException(ErrorCode.MISS_MATCH_PASSWORD);
+            }
+
+            return hashingValue;
+        }).orElseThrow(() -> {
+            throw new CustomException(ErrorCode.MISS_MATCH_PASSWORD);
+        });
+
+        // TODO jwt
+        return new LoginResponse(ErrorCode.SUCCESS, "TOKEN");
+    }
 
     @Transactional(transactionManager = "createUserTransactionManager")
     public CreateUserResponse createUser(CreateUserRequest request) {
