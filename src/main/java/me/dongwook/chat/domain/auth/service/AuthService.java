@@ -2,6 +2,8 @@ package me.dongwook.chat.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.dongwook.chat.common.exception.CustomException;
+import me.dongwook.chat.common.exception.ErrorCode;
 import me.dongwook.chat.domain.auth.model.request.CreateUserRequest;
 import me.dongwook.chat.domain.auth.model.response.CreateUserResponse;
 import me.dongwook.chat.domain.repository.UserRepository;
@@ -27,7 +29,8 @@ public class AuthService {
         Optional<User> user = userRepository.findByName(request.name());
 
         if (user.isPresent()) {
-            // TODO error
+            log.error("User {} already exists", request.name());
+            throw new CustomException(ErrorCode.USER_ALREADY_EXIST, "User already exists");
         }
 
         try {
@@ -37,11 +40,11 @@ public class AuthService {
 
             User savedUser = userRepository.save(newUser);
             if (savedUser == null) {
-                // TODO error
+                throw new CustomException(ErrorCode.USER_SAVED_FAILED);
             }
 
         } catch (Exception e) {
-            // TODO error
+            throw new CustomException(ErrorCode.USER_SAVED_FAILED);
         }
 
         return new CreateUserResponse(request.name());
