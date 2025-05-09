@@ -7,6 +7,7 @@ import me.dongwook.chat.domain.auth.model.response.CreateUserResponse;
 import me.dongwook.chat.domain.repository.UserRepository;
 import me.dongwook.chat.domain.repository.entity.User;
 import me.dongwook.chat.domain.repository.entity.UserCredentials;
+import me.dongwook.chat.security.Hasher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.Optional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final Hasher hasher;
 
     @Transactional(transactionManager = "createUserTransactionManager")
     public CreateUserResponse createUser(CreateUserRequest request) {
@@ -53,7 +55,12 @@ public class AuthService {
     }
 
     private UserCredentials newUserCredentials(User user, String password) {
-        // TODO hash
+        String hashingValue = hasher.getHashingValue(password);
+
+        return UserCredentials.builder()
+                .user(user)
+                .hashed_password(hashingValue)
+                .build();
     }
 
 
