@@ -2,11 +2,19 @@ package me.dongwook.chat.security;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.AlgorithmMismatchException;
+import com.auth0.jwt.exceptions.InvalidClaimException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.extern.slf4j.Slf4j;
 import me.dongwook.chat.common.constants.Constants;
+import me.dongwook.chat.common.exception.CustomException;
+import me.dongwook.chat.common.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.security.SignatureException;
 import java.util.Date;
 
 @Slf4j
@@ -54,6 +62,39 @@ public class JWTProvider {
                 .sign(Algorithm.HMAC256(refreshSecretKey));
     }
 
+    public static DecodedJWT checkTokenForRefresh(String token) {
+        try {
+            DecodedJWT decoded = JWT.require(Algorithm.HMAC256(secretKey)).build().verify(token);
+            log.error("token must be expired : {}", decoded.getSubject());
+            throw new CustomException(ErrorCode.ACCESS_TOKEN_IS_NOT_EXPIRED, token);
+        } catch (AlgorithmMismatchException | SignatureVerificationException | InvalidClaimException e) {
+            throw new CustomException(ErrorCode.TOKEN_IS_INVALID);
+        } catch (TokenExpiredException e) {
+            return JWT.decode(token);
+        }
+    }
+
+    public static DecodedJWT decodedAccessToken(String token) {
+        return decodeTokenAfterVerify(token, secretKey);
+    }
+
+    public static DecodedJWT decodedRefreshToken(String token) {
+        return decodeTokenAfterVerify(token, secretKey);
+    }
+
+    private static DecodedJWT decodeTokenAfterVerify(String token, String key) {
+        try {
+            return JWT.require(Algorithm.HMAC256(key)).build().verify(token);
+        } catch (AlgorithmMismatchException | SignatureVerificationException | InvalidClaimException e) {
+            throw new CustomException(ErrorCode.TOKEN_IS_INVALID);
+        } catch (TokenExpiredException e) {
+            throw new CustomException(ErrorCode.TOKEN_IS_EXPIRED);
+        }
+    }
+
+    public static DecodedJWT decodedJWT(String token) {
+        return JWT.decode(token);
+    }
 
 
 }
